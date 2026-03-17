@@ -33,6 +33,10 @@ func main() {
 	tools.RegisterAccountTools(server, client)
 	tools.RegisterReportTools(server, client)
 	tools.RegisterAutomationTools(server, client)
+	tools.RegisterAuditTools(server, client)
+	tools.RegisterAgentBotTools(server, client)
+	tools.RegisterIntegrationTools(server, client)
+	tools.RegisterHelpCenterTools(server, client)
 
 	log.Println("Starting chatwoot-mcp server (stdio)...")
 	if err := server.Run(context.Background(), &mcp.StdioTransport{}); err != nil {

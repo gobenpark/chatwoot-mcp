@@ -145,8 +145,12 @@ func RegisterConversationTools(server *mcp.Server, client *chatwoot.Client) {
 			sb.WriteString(fmt.Sprintf("Labels: %s\n", strings.Join(conv.Labels, ", ")))
 		}
 		sb.WriteString(fmt.Sprintf("Messages: %d (unread: %d)\n", conv.MessagesCount, conv.UnreadMessagesCount))
-		sb.WriteString(fmt.Sprintf("Created: %s\n", conv.CreatedAt.Format(time.RFC3339)))
-		sb.WriteString(fmt.Sprintf("Last activity: %s\n", conv.LastActivityAt.Format(time.RFC3339)))
+		if conv.CreatedAt.Valid {
+			sb.WriteString(fmt.Sprintf("Created: %s\n", conv.CreatedAt.Format(time.RFC3339)))
+		}
+		if conv.LastActivityAt.Valid {
+			sb.WriteString(fmt.Sprintf("Last activity: %s\n", conv.LastActivityAt.Format(time.RFC3339)))
+		}
 		return textResult(sb.String()), nil, nil
 	})
 

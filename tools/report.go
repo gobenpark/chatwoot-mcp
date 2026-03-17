@@ -27,6 +27,16 @@ type GetTeamSummaryInput struct {
 	Until string `json:"until,omitempty"`
 }
 
+type GetInboxSummaryInput struct {
+	Since string `json:"since,omitempty"`
+	Until string `json:"until,omitempty"`
+}
+
+type GetChannelSummaryInput struct {
+	Since string `json:"since,omitempty"`
+	Until string `json:"until,omitempty"`
+}
+
 // RegisterReportTools registers report-related tools on the MCP server.
 func RegisterReportTools(server *mcp.Server, client *chatwoot.Client) {
 
@@ -96,6 +106,54 @@ func RegisterReportTools(server *mcp.Server, client *chatwoot.Client) {
 		}
 		if len(teams) == 0 {
 			sb.WriteString("No team data available.")
+		}
+		return textResult(sb.String()), nil, nil
+	})
+
+	// --- get_inbox_summary ---
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "get_inbox_summary",
+		Description: "Get per-inbox performance metrics. Provide since/until as dates (YYYY-MM-DD). Defaults to last 7 days.",
+	}, func(ctx context.Context, req *mcp.CallToolRequest, input GetInboxSummaryInput) (*mcp.CallToolResult, any, error) {
+		since, until := parseDateRange(input.Since, input.Until)
+		inboxes, err := client.GetInboxSummary(ctx, since, until)
+		if err != nil {
+			return errorResult(err), nil, nil
+		}
+		var sb strings.Builder
+		sb.WriteString(fmt.Sprintf("Inbox Summary (%s to %s)\n\n", time.Unix(since, 0).Format("2006-01-02"), time.Unix(until, 0).Format("2006-01-02")))
+		for _, i := range inboxes {
+			sb.WriteString(fmt.Sprintf("- [%d] %s\n", i.ID, i.Name))
+			sb.WriteString(fmt.Sprintf("    Conversations: %d, Resolutions: %d\n", i.ConversationsCount, i.ResolutionsCount))
+			sb.WriteString(fmt.Sprintf("    Avg FRT: %.1fs, Avg Resolution: %.1fs\n", i.AvgFirstResponseTime, i.AvgResolutionTime))
+			sb.WriteString(fmt.Sprintf("    Messages in: %d, out: %d\n", i.IncomingMessagesCount, i.OutgoingMessagesCount))
+		}
+		if len(inboxes) == 0 {
+			sb.WriteString("No inbox data available.")
+		}
+		return textResult(sb.String()), nil, nil
+	})
+
+	// --- get_channel_summary ---
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "get_channel_summary",
+		Description: "Get per-channel performance metrics grouped by channel type (email, web, api, etc.). Provide since/until as dates (YYYY-MM-DD). Defaults to last 7 days.",
+	}, func(ctx context.Context, req *mcp.CallToolRequest, input GetChannelSummaryInput) (*mcp.CallToolResult, any, error) {
+		since, until := parseDateRange(input.Since, input.Until)
+		channels, err := client.GetChannelSummary(ctx, since, until)
+		if err != nil {
+			return errorResult(err), nil, nil
+		}
+		var sb strings.Builder
+		sb.WriteString(fmt.Sprintf("Channel Summary (%s to %s)\n\n", time.Unix(since, 0).Format("2006-01-02"), time.Unix(until, 0).Format("2006-01-02")))
+		for _, ch := range channels {
+			sb.WriteString(fmt.Sprintf("- %s\n", ch.ChannelType))
+			sb.WriteString(fmt.Sprintf("    Conversations: %d, Resolutions: %d\n", ch.ConversationsCount, ch.ResolutionsCount))
+			sb.WriteString(fmt.Sprintf("    Avg FRT: %.1fs, Avg Resolution: %.1fs\n", ch.AvgFirstResponseTime, ch.AvgResolutionTime))
+			sb.WriteString(fmt.Sprintf("    Messages in: %d, out: %d\n", ch.IncomingMessagesCount, ch.OutgoingMessagesCount))
+		}
+		if len(channels) == 0 {
+			sb.WriteString("No channel data available.")
 		}
 		return textResult(sb.String()), nil, nil
 	})

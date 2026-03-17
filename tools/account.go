@@ -29,6 +29,16 @@ type ListInboxMembersInput struct {
 	InboxID int `json:"inbox_id"`
 }
 
+type GetAccountInput struct{}
+
+type UpdateAccountInput struct {
+	Name            string `json:"name,omitempty"`
+	Locale          string `json:"locale,omitempty"`
+	Domain          string `json:"domain,omitempty"`
+	SupportEmail    string `json:"support_email,omitempty"`
+	AutoResolveDays *int   `json:"auto_resolve_duration,omitempty"`
+}
+
 // RegisterAccountTools registers inbox, agent, team, label, and profile tools.
 func RegisterAccountTools(server *mcp.Server, client *chatwoot.Client) {
 
@@ -192,5 +202,57 @@ func RegisterAccountTools(server *mcp.Server, client *chatwoot.Client) {
 		sb.WriteString(fmt.Sprintf("Role: %s\n", profile.Role))
 		sb.WriteString(fmt.Sprintf("Account ID: %d\n", profile.AccountID))
 		return textResult(sb.String()), nil, nil
+	})
+
+	// --- get_account ---
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "get_account",
+		Description: "Get the current account details including name, locale, domain, and settings.",
+	}, func(ctx context.Context, req *mcp.CallToolRequest, input GetAccountInput) (*mcp.CallToolResult, any, error) {
+		account, err := client.GetAccount(ctx)
+		if err != nil {
+			return errorResult(err), nil, nil
+		}
+		var sb strings.Builder
+		sb.WriteString(fmt.Sprintf("Account #%d: %s\n", account.ID, account.Name))
+		if account.Locale != "" {
+			sb.WriteString(fmt.Sprintf("Locale: %s\n", account.Locale))
+		}
+		if account.Domain != "" {
+			sb.WriteString(fmt.Sprintf("Domain: %s\n", account.Domain))
+		}
+		if account.SupportEmail != "" {
+			sb.WriteString(fmt.Sprintf("Support email: %s\n", account.SupportEmail))
+		}
+		sb.WriteString(fmt.Sprintf("Auto-resolve after: %d days\n", account.AutoResolveDays))
+		return textResult(sb.String()), nil, nil
+	})
+
+	// --- update_account ---
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "update_account",
+		Description: "Update the current account's name, locale, domain, support email, or auto-resolve duration. Provide only the fields you want to change.",
+	}, func(ctx context.Context, req *mcp.CallToolRequest, input UpdateAccountInput) (*mcp.CallToolResult, any, error) {
+		updateReq := chatwoot.UpdateAccountRequest{}
+		if input.Name != "" {
+			updateReq.Name = &input.Name
+		}
+		if input.Locale != "" {
+			updateReq.Locale = &input.Locale
+		}
+		if input.Domain != "" {
+			updateReq.Domain = &input.Domain
+		}
+		if input.SupportEmail != "" {
+			updateReq.SupportEmail = &input.SupportEmail
+		}
+		if input.AutoResolveDays != nil {
+			updateReq.AutoResolveDays = input.AutoResolveDays
+		}
+		account, err := client.UpdateAccount(ctx, updateReq)
+		if err != nil {
+			return errorResult(err), nil, nil
+		}
+		return textResult(fmt.Sprintf("Account updated! Name: %s, Locale: %s", account.Name, account.Locale)), nil, nil
 	})
 }

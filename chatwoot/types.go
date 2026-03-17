@@ -2,8 +2,54 @@ package chatwoot
 
 import (
 	"encoding/json"
+	"fmt"
+	"strconv"
 	"time"
 )
+
+// FlexTime handles Chatwoot's inconsistent time formats (RFC3339, Unix epoch int/float, null).
+type FlexTime struct {
+	time.Time
+	Valid bool
+}
+
+func (ft *FlexTime) UnmarshalJSON(data []byte) error {
+	s := string(data)
+	if s == "null" || s == `""` || s == "0" {
+		ft.Valid = false
+		return nil
+	}
+	// Try RFC3339 string
+	if len(s) > 2 && s[0] == '"' {
+		var t time.Time
+		if err := json.Unmarshal(data, &t); err == nil {
+			ft.Time = t
+			ft.Valid = true
+			return nil
+		}
+	}
+	// Try numeric (unix epoch)
+	if f, err := strconv.ParseFloat(s, 64); err == nil {
+		ft.Time = time.Unix(int64(f), 0)
+		ft.Valid = true
+		return nil
+	}
+	return fmt.Errorf("FlexTime: cannot parse %s", s)
+}
+
+func (ft FlexTime) MarshalJSON() ([]byte, error) {
+	if !ft.Valid {
+		return []byte("null"), nil
+	}
+	return json.Marshal(ft.Time)
+}
+
+func (ft FlexTime) String() string {
+	if !ft.Valid {
+		return ""
+	}
+	return ft.Time.Format(time.RFC3339)
+}
 
 // ---------------------------------------------------------------------------
 // Conversation
@@ -22,8 +68,8 @@ type Conversation struct {
 	Labels              []string         `json:"labels"`
 	Priority            *string          `json:"priority"`
 	CustomAttributes    map[string]any   `json:"custom_attributes"`
-	LastActivityAt      time.Time        `json:"last_activity_at"`
-	CreatedAt           time.Time        `json:"created_at"`
+	LastActivityAt      FlexTime         `json:"last_activity_at"`
+	CreatedAt           FlexTime         `json:"created_at"`
 }
 
 // ConversationMeta holds sender and assignee info.
@@ -55,11 +101,34 @@ type DataPayload struct {
 	Payload []Conversation `json:"payload"`
 }
 
+// FlexInt handles JSON values that can be int or string.
+type FlexInt int
+
+func (fi *FlexInt) UnmarshalJSON(data []byte) error {
+	s := string(data)
+	if s == "null" {
+		*fi = 0
+		return nil
+	}
+	// Remove quotes if string
+	if len(s) > 1 && s[0] == '"' {
+		s = s[1 : len(s)-1]
+	}
+	n, err := strconv.Atoi(s)
+	if err != nil {
+		return fmt.Errorf("FlexInt: cannot parse %s", string(data))
+	}
+	*fi = FlexInt(n)
+	return nil
+}
+
 // PaginationMeta holds pagination info.
 type PaginationMeta struct {
-	AllCount  int `json:"all_count"`
-	Page      int `json:"page"`
-	TotalPage int `json:"total_pages"`
+	AllCount  FlexInt `json:"all_count"`
+	Count     FlexInt `json:"count"`
+	Page      FlexInt `json:"page"`
+	CurrentPage FlexInt `json:"current_page"`
+	TotalPage FlexInt `json:"total_pages"`
 }
 
 // CreateConversationRequest is the payload for creating a new conversation.
@@ -183,8 +252,8 @@ type Contact struct {
 	Email            *string        `json:"email"`
 	PhoneNumber      *string        `json:"phone_number"`
 	Identifier       *string        `json:"identifier"`
-	CreatedAt        time.Time      `json:"created_at"`
-	LastActivityAt   *time.Time     `json:"last_activity_at"`
+	CreatedAt        FlexTime       `json:"created_at"`
+	LastActivityAt   FlexTime       `json:"last_activity_at"`
 	CustomAttributes map[string]any `json:"custom_attributes"`
 }
 
@@ -377,7 +446,7 @@ type AutomationRule struct {
 	Conditions  json.RawMessage  `json:"conditions"`
 	Actions     json.RawMessage  `json:"actions"`
 	Active      bool             `json:"active"`
-	CreatedAt   time.Time        `json:"created_at"`
+	CreatedAt   FlexTime         `json:"created_at"`
 }
 
 // CreateAutomationRuleRequest is the payload for creating an automation rule.
@@ -444,6 +513,29 @@ type AgentSummary struct {
 type TeamSummary struct {
 	ID                    int     `json:"id"`
 	Name                  string  `json:"name"`
+	AvgFirstResponseTime  float64 `json:"avg_first_response_time"`
+	AvgResolutionTime     float64 `json:"avg_resolution_time"`
+	ConversationsCount    int     `json:"conversations_count"`
+	IncomingMessagesCount int     `json:"incoming_messages_count"`
+	OutgoingMessagesCount int     `json:"outgoing_messages_count"`
+	ResolutionsCount      int     `json:"resolutions_count"`
+}
+
+// InboxSummary contains report metrics for a single inbox.
+type InboxSummary struct {
+	ID                    int     `json:"id"`
+	Name                  string  `json:"name"`
+	AvgFirstResponseTime  float64 `json:"avg_first_response_time"`
+	AvgResolutionTime     float64 `json:"avg_resolution_time"`
+	ConversationsCount    int     `json:"conversations_count"`
+	IncomingMessagesCount int     `json:"incoming_messages_count"`
+	OutgoingMessagesCount int     `json:"outgoing_messages_count"`
+	ResolutionsCount      int     `json:"resolutions_count"`
+}
+
+// ChannelSummary contains report metrics grouped by channel type.
+type ChannelSummary struct {
+	ChannelType           string  `json:"channel_type"`
 	AvgFirstResponseTime  float64 `json:"avg_first_response_time"`
 	AvgResolutionTime     float64 `json:"avg_resolution_time"`
 	ConversationsCount    int     `json:"conversations_count"`
@@ -534,10 +626,56 @@ type Article struct {
 
 // Category represents a help center category.
 type Category struct {
-	ID       int    `json:"id"`
-	Name     string `json:"name"`
-	Slug     string `json:"slug"`
-	PortalID int    `json:"portal_id"`
+	ID          int    `json:"id"`
+	Name        string `json:"name"`
+	Slug        string `json:"slug"`
+	Description string `json:"description"`
+	Locale      string `json:"locale"`
+	PortalID    int    `json:"portal_id"`
+	Position    int    `json:"position"`
+}
+
+// CreateArticleRequest is the payload for creating an article.
+type CreateArticleRequest struct {
+	Title       string `json:"title"`
+	Content     string `json:"content"`
+	Description string `json:"description,omitempty"`
+	Status      string `json:"status,omitempty"`
+	CategoryID  *int   `json:"category_id,omitempty"`
+	AuthorID    *int   `json:"author_id,omitempty"`
+}
+
+// UpdateArticleRequest is the payload for updating an article.
+type UpdateArticleRequest struct {
+	Title       *string `json:"title,omitempty"`
+	Content     *string `json:"content,omitempty"`
+	Description *string `json:"description,omitempty"`
+	Status      *string `json:"status,omitempty"`
+	CategoryID  *int    `json:"category_id,omitempty"`
+}
+
+// UpdatePortalRequest is the payload for updating a portal.
+type UpdatePortalRequest struct {
+	Name *string `json:"name,omitempty"`
+	Slug *string `json:"slug,omitempty"`
+}
+
+// CreateCategoryRequest is the payload for creating a category.
+type CreateCategoryRequest struct {
+	Name        string `json:"name"`
+	Slug        string `json:"slug,omitempty"`
+	Description string `json:"description,omitempty"`
+	Locale      string `json:"locale,omitempty"`
+	Position    *int   `json:"position,omitempty"`
+	ParentID    *int   `json:"parent_id,omitempty"`
+}
+
+// UpdateCategoryRequest is the payload for updating a category.
+type UpdateCategoryRequest struct {
+	Name        *string `json:"name,omitempty"`
+	Description *string `json:"description,omitempty"`
+	Locale      *string `json:"locale,omitempty"`
+	Position    *int    `json:"position,omitempty"`
 }
 
 // ---------------------------------------------------------------------------
@@ -550,6 +688,125 @@ type Notification struct {
 	NotificationType string     `json:"notification_type"`
 	PrimaryActorType string     `json:"primary_actor_type"`
 	PrimaryActorID   int        `json:"primary_actor_id"`
-	ReadAt           *time.Time `json:"read_at"`
-	CreatedAt        time.Time  `json:"created_at"`
+	ReadAt           FlexTime `json:"read_at"`
+	CreatedAt        FlexTime `json:"created_at"`
+}
+
+// ---------------------------------------------------------------------------
+// Account
+// ---------------------------------------------------------------------------
+
+// Account represents a Chatwoot account.
+type Account struct {
+	ID              int    `json:"id"`
+	Name            string `json:"name"`
+	Locale          string `json:"locale"`
+	Domain          string `json:"domain"`
+	SupportEmail    string `json:"support_email"`
+	AutoResolveDays int    `json:"auto_resolve_duration"`
+}
+
+// UpdateAccountRequest is the payload for updating an account.
+type UpdateAccountRequest struct {
+	Name            *string `json:"name,omitempty"`
+	Locale          *string `json:"locale,omitempty"`
+	Domain          *string `json:"domain,omitempty"`
+	SupportEmail    *string `json:"support_email,omitempty"`
+	AutoResolveDays *int    `json:"auto_resolve_duration,omitempty"`
+}
+
+// ---------------------------------------------------------------------------
+// Audit Log
+// ---------------------------------------------------------------------------
+
+// AuditLog represents an audit log entry.
+type AuditLog struct {
+	ID             int             `json:"id"`
+	AuditableID    int             `json:"auditable_id"`
+	AuditableType  string          `json:"auditable_type"`
+	Action         string          `json:"action"`
+	AuditedChanges json.RawMessage `json:"audited_changes"`
+	AssociatedID   *int            `json:"associated_id"`
+	AssociatedType *string         `json:"associated_type"`
+	UserID         *int            `json:"user_id"`
+	Username       *string         `json:"username"`
+	CreatedAt      FlexTime        `json:"created_at"`
+}
+
+// AuditLogListResponse is the response from list audit logs.
+type AuditLogListResponse struct {
+	Payload []AuditLog     `json:"payload"`
+	Meta    PaginationMeta `json:"meta"`
+}
+
+// ---------------------------------------------------------------------------
+// Agent Bot
+// ---------------------------------------------------------------------------
+
+// AgentBot represents an agent bot.
+type AgentBot struct {
+	ID          int             `json:"id"`
+	Name        string          `json:"name"`
+	Description string          `json:"description"`
+	OutgoingURL string          `json:"outgoing_url"`
+	BotType     string          `json:"bot_type"`
+	BotConfig   json.RawMessage `json:"bot_config"`
+	AccountID   int             `json:"account_id"`
+	CreatedAt   FlexTime        `json:"created_at"`
+	UpdatedAt   FlexTime        `json:"updated_at"`
+}
+
+// CreateAgentBotRequest is the payload for creating an agent bot.
+type CreateAgentBotRequest struct {
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+	OutgoingURL string `json:"outgoing_url"`
+	BotType     string `json:"bot_type,omitempty"`
+}
+
+// UpdateAgentBotRequest is the payload for updating an agent bot.
+type UpdateAgentBotRequest struct {
+	Name        *string `json:"name,omitempty"`
+	Description *string `json:"description,omitempty"`
+	OutgoingURL *string `json:"outgoing_url,omitempty"`
+	BotType     *string `json:"bot_type,omitempty"`
+}
+
+// ---------------------------------------------------------------------------
+// Integration
+// ---------------------------------------------------------------------------
+
+// IntegrationApp represents an available integration.
+type IntegrationApp struct {
+	ID          string            `json:"id"`
+	Name        string            `json:"name"`
+	Description string            `json:"description"`
+	Enabled     bool              `json:"enabled"`
+	HookType    string            `json:"hook_type"`
+	Hooks       []IntegrationHook `json:"hooks"`
+}
+
+// IntegrationHook represents an integration hook instance.
+type IntegrationHook struct {
+	ID          int             `json:"id"`
+	AppID       string          `json:"app_id"`
+	InboxID     *int            `json:"inbox_id"`
+	AccountID   int             `json:"account_id"`
+	Status      string          `json:"status"`
+	HookType    string          `json:"hook_type"`
+	Settings    json.RawMessage `json:"settings"`
+	ReferenceID *string         `json:"reference_id"`
+	CreatedAt   FlexTime        `json:"created_at"`
+}
+
+// CreateIntegrationHookRequest is the payload for creating an integration hook.
+type CreateIntegrationHookRequest struct {
+	AppID    string          `json:"app_id"`
+	InboxID  *int            `json:"inbox_id,omitempty"`
+	Settings json.RawMessage `json:"settings,omitempty"`
+}
+
+// UpdateIntegrationHookRequest is the payload for updating an integration hook.
+type UpdateIntegrationHookRequest struct {
+	Settings json.RawMessage `json:"settings,omitempty"`
 }

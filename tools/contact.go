@@ -283,8 +283,10 @@ func formatContactDetail(c *chatwoot.Contact) string {
 	if c.Identifier != nil && *c.Identifier != "" {
 		sb.WriteString(fmt.Sprintf("Identifier: %s\n", *c.Identifier))
 	}
-	sb.WriteString(fmt.Sprintf("Created: %s\n", c.CreatedAt.Format("2006-01-02 15:04")))
-	if c.LastActivityAt != nil {
+	if c.CreatedAt.Valid {
+		sb.WriteString(fmt.Sprintf("Created: %s\n", c.CreatedAt.Format("2006-01-02 15:04")))
+	}
+	if c.LastActivityAt.Valid {
 		sb.WriteString(fmt.Sprintf("Last activity: %s\n", c.LastActivityAt.Format("2006-01-02 15:04")))
 	}
 	if len(c.CustomAttributes) > 0 {
