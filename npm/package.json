@@ -1,0 +1,25 @@
+{
+  "name": "chatwoot-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for Chatwoot - connect Claude to your Chatwoot instance",
+  "bin": {
+    "chatwoot-mcp": "run.js"
+  },
+  "scripts": {
+    "postinstall": "node install.js"
+  },
+  "keywords": [
+    "chatwoot",
+    "mcp",
+    "model-context-protocol",
+    "claude",
+    "ai",
+    "customer-support"
+  ],
+  "author": "Ben Park",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gobenpark/chatwoot-mcp.git"
+  }
+}

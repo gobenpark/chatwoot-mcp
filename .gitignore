@@ -1,0 +1,22 @@
+# Binary
+chatwoot-mcp
+dist/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+
+# MCP config (contains API keys)
+.mcp.json
+
+# Test
+/tmp/
