@@ -489,60 +489,44 @@ type UpdateWebhookRequest struct {
 
 // ReportSummary contains aggregate metrics for a report.
 type ReportSummary struct {
-	AvgFirstResponseTime  float64 `json:"avg_first_response_time"`
-	AvgResolutionTime     float64 `json:"avg_resolution_time"`
-	ConversationsCount    int     `json:"conversations_count"`
-	IncomingMessagesCount int     `json:"incoming_messages_count"`
-	OutgoingMessagesCount int     `json:"outgoing_messages_count"`
-	ResolutionsCount      int     `json:"resolutions_count"`
+	ConversationsCount    int      `json:"conversations_count"`
+	IncomingMessagesCount int      `json:"incoming_messages_count"`
+	OutgoingMessagesCount int      `json:"outgoing_messages_count"`
+	AvgFirstResponseTime  *float64 `json:"avg_first_response_time"`
+	AvgResolutionTime     *float64 `json:"avg_resolution_time"`
+	ResolutionsCount      int      `json:"resolutions_count"`
+	AvgReplyTime          *float64 `json:"reply_time"`
+	Previous              *ReportSummaryPrevious `json:"previous,omitempty"`
 }
 
-// AgentSummary contains report metrics for a single agent.
-type AgentSummary struct {
-	ID                    int     `json:"id"`
-	Name                  string  `json:"name"`
-	Email                 string  `json:"email"`
-	AvgFirstResponseTime  float64 `json:"avg_first_response_time"`
-	AvgResolutionTime     float64 `json:"avg_resolution_time"`
-	ConversationsCount    int     `json:"conversations_count"`
-	IncomingMessagesCount int     `json:"incoming_messages_count"`
-	OutgoingMessagesCount int     `json:"outgoing_messages_count"`
-	ResolutionsCount      int     `json:"resolutions_count"`
+// ReportSummaryPrevious contains the previous period's metrics for comparison.
+type ReportSummaryPrevious struct {
+	ConversationsCount    int      `json:"conversations_count"`
+	IncomingMessagesCount int      `json:"incoming_messages_count"`
+	OutgoingMessagesCount int      `json:"outgoing_messages_count"`
+	AvgFirstResponseTime  *float64 `json:"avg_first_response_time"`
+	AvgResolutionTime     *float64 `json:"avg_resolution_time"`
+	ResolutionsCount      int      `json:"resolutions_count"`
 }
 
-// TeamSummary contains report metrics for a single team.
-type TeamSummary struct {
-	ID                    int     `json:"id"`
-	Name                  string  `json:"name"`
-	AvgFirstResponseTime  float64 `json:"avg_first_response_time"`
-	AvgResolutionTime     float64 `json:"avg_resolution_time"`
-	ConversationsCount    int     `json:"conversations_count"`
-	IncomingMessagesCount int     `json:"incoming_messages_count"`
-	OutgoingMessagesCount int     `json:"outgoing_messages_count"`
-	ResolutionsCount      int     `json:"resolutions_count"`
-}
-
-// InboxSummary contains report metrics for a single inbox.
-type InboxSummary struct {
-	ID                    int     `json:"id"`
-	Name                  string  `json:"name"`
-	AvgFirstResponseTime  float64 `json:"avg_first_response_time"`
-	AvgResolutionTime     float64 `json:"avg_resolution_time"`
-	ConversationsCount    int     `json:"conversations_count"`
-	IncomingMessagesCount int     `json:"incoming_messages_count"`
-	OutgoingMessagesCount int     `json:"outgoing_messages_count"`
-	ResolutionsCount      int     `json:"resolutions_count"`
+// SummaryReportEntry contains report metrics for an agent, inbox, or team.
+type SummaryReportEntry struct {
+	ID                         int      `json:"id"`
+	ConversationsCount         int      `json:"conversations_count"`
+	ResolvedConversationsCount int      `json:"resolved_conversations_count"`
+	AvgResolutionTime          *float64 `json:"avg_resolution_time"`
+	AvgFirstResponseTime       *float64 `json:"avg_first_response_time"`
+	AvgReplyTime               *float64 `json:"avg_reply_time"`
 }
 
 // ChannelSummary contains report metrics grouped by channel type.
 type ChannelSummary struct {
-	ChannelType           string  `json:"channel_type"`
-	AvgFirstResponseTime  float64 `json:"avg_first_response_time"`
-	AvgResolutionTime     float64 `json:"avg_resolution_time"`
-	ConversationsCount    int     `json:"conversations_count"`
-	IncomingMessagesCount int     `json:"incoming_messages_count"`
-	OutgoingMessagesCount int     `json:"outgoing_messages_count"`
-	ResolutionsCount      int     `json:"resolutions_count"`
+	ChannelType                string   `json:"channel_type"`
+	ConversationsCount         int      `json:"conversations_count"`
+	ResolvedConversationsCount int      `json:"resolved_conversations_count"`
+	AvgResolutionTime          *float64 `json:"avg_resolution_time"`
+	AvgFirstResponseTime       *float64 `json:"avg_first_response_time"`
+	AvgReplyTime               *float64 `json:"avg_reply_time"`
 }
 
 // ---------------------------------------------------------------------------

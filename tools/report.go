@@ -37,6 +37,19 @@ type GetChannelSummaryInput struct {
 	Until string `json:"until,omitempty"`
 }
 
+func fmtFloat(v *float64) string {
+	if v == nil {
+		return "N/A"
+	}
+	return fmt.Sprintf("%.1fs", *v)
+}
+
+func formatSummaryEntry(sb *strings.Builder, label string, e chatwoot.SummaryReportEntry) {
+	sb.WriteString(fmt.Sprintf("- [%d] %s\n", e.ID, label))
+	sb.WriteString(fmt.Sprintf("    Conversations: %d, Resolved: %d\n", e.ConversationsCount, e.ResolvedConversationsCount))
+	sb.WriteString(fmt.Sprintf("    Avg FRT: %s, Avg Resolution: %s\n", fmtFloat(e.AvgFirstResponseTime), fmtFloat(e.AvgResolutionTime)))
+}
+
 // RegisterReportTools registers report-related tools on the MCP server.
 func RegisterReportTools(server *mcp.Server, client *chatwoot.Client) {
 
@@ -57,8 +70,12 @@ func RegisterReportTools(server *mcp.Server, client *chatwoot.Client) {
 		sb.WriteString(fmt.Sprintf("Resolutions: %d\n", summary.ResolutionsCount))
 		sb.WriteString(fmt.Sprintf("Incoming messages: %d\n", summary.IncomingMessagesCount))
 		sb.WriteString(fmt.Sprintf("Outgoing messages: %d\n", summary.OutgoingMessagesCount))
-		sb.WriteString(fmt.Sprintf("Avg first response time: %.1fs\n", summary.AvgFirstResponseTime))
-		sb.WriteString(fmt.Sprintf("Avg resolution time: %.1fs\n", summary.AvgResolutionTime))
+		sb.WriteString(fmt.Sprintf("Avg first response time: %s\n", fmtFloat(summary.AvgFirstResponseTime)))
+		sb.WriteString(fmt.Sprintf("Avg resolution time: %s\n", fmtFloat(summary.AvgResolutionTime)))
+		if summary.Previous != nil {
+			sb.WriteString(fmt.Sprintf("\nPrevious period: %d conversations, %d resolutions\n",
+				summary.Previous.ConversationsCount, summary.Previous.ResolutionsCount))
+		}
 		return textResult(sb.String()), nil, nil
 	})
 
@@ -68,19 +85,27 @@ func RegisterReportTools(server *mcp.Server, client *chatwoot.Client) {
 		Description: "Get per-agent performance metrics including conversations count, response time, and resolution time. Provide since/until as dates (YYYY-MM-DD). Defaults to last 7 days.",
 	}, func(ctx context.Context, req *mcp.CallToolRequest, input GetAgentSummaryInput) (*mcp.CallToolResult, any, error) {
 		since, until := parseDateRange(input.Since, input.Until)
-		agents, err := client.GetAgentSummary(ctx, since, until)
+		entries, err := client.GetAgentSummary(ctx, since, until)
 		if err != nil {
 			return errorResult(err), nil, nil
 		}
+		// Build agent name map
+		agentNames := map[int]string{}
+		if agents, err := client.ListAgents(ctx); err == nil {
+			for _, a := range agents {
+				agentNames[a.ID] = fmt.Sprintf("%s <%s>", a.Name, a.Email)
+			}
+		}
 		var sb strings.Builder
 		sb.WriteString(fmt.Sprintf("Agent Summary (%s to %s)\n\n", time.Unix(since, 0).Format("2006-01-02"), time.Unix(until, 0).Format("2006-01-02")))
-		for _, a := range agents {
-			sb.WriteString(fmt.Sprintf("- [%d] %s <%s>\n", a.ID, a.Name, a.Email))
-			sb.WriteString(fmt.Sprintf("    Conversations: %d, Resolutions: %d\n", a.ConversationsCount, a.ResolutionsCount))
-			sb.WriteString(fmt.Sprintf("    Avg FRT: %.1fs, Avg Resolution: %.1fs\n", a.AvgFirstResponseTime, a.AvgResolutionTime))
-			sb.WriteString(fmt.Sprintf("    Messages in: %d, out: %d\n", a.IncomingMessagesCount, a.OutgoingMessagesCount))
+		for _, e := range entries {
+			label := agentNames[e.ID]
+			if label == "" {
+				label = fmt.Sprintf("Agent #%d", e.ID)
+			}
+			formatSummaryEntry(&sb, label, e)
 		}
-		if len(agents) == 0 {
+		if len(entries) == 0 {
 			sb.WriteString("No agent data available.")
 		}
 		return textResult(sb.String()), nil, nil
@@ -92,19 +117,27 @@ func RegisterReportTools(server *mcp.Server, client *chatwoot.Client) {
 		Description: "Get per-team performance metrics. Provide since/until as dates (YYYY-MM-DD). Defaults to last 7 days.",
 	}, func(ctx context.Context, req *mcp.CallToolRequest, input GetTeamSummaryInput) (*mcp.CallToolResult, any, error) {
 		since, until := parseDateRange(input.Since, input.Until)
-		teams, err := client.GetTeamSummary(ctx, since, until)
+		entries, err := client.GetTeamSummary(ctx, since, until)
 		if err != nil {
 			return errorResult(err), nil, nil
 		}
+		// Build team name map
+		teamNames := map[int]string{}
+		if teams, err := client.ListTeams(ctx); err == nil {
+			for _, t := range teams {
+				teamNames[t.ID] = t.Name
+			}
+		}
 		var sb strings.Builder
 		sb.WriteString(fmt.Sprintf("Team Summary (%s to %s)\n\n", time.Unix(since, 0).Format("2006-01-02"), time.Unix(until, 0).Format("2006-01-02")))
-		for _, t := range teams {
-			sb.WriteString(fmt.Sprintf("- [%d] %s\n", t.ID, t.Name))
-			sb.WriteString(fmt.Sprintf("    Conversations: %d, Resolutions: %d\n", t.ConversationsCount, t.ResolutionsCount))
-			sb.WriteString(fmt.Sprintf("    Avg FRT: %.1fs, Avg Resolution: %.1fs\n", t.AvgFirstResponseTime, t.AvgResolutionTime))
-			sb.WriteString(fmt.Sprintf("    Messages in: %d, out: %d\n", t.IncomingMessagesCount, t.OutgoingMessagesCount))
+		for _, e := range entries {
+			label := teamNames[e.ID]
+			if label == "" {
+				label = fmt.Sprintf("Team #%d", e.ID)
+			}
+			formatSummaryEntry(&sb, label, e)
 		}
-		if len(teams) == 0 {
+		if len(entries) == 0 {
 			sb.WriteString("No team data available.")
 		}
 		return textResult(sb.String()), nil, nil
@@ -116,19 +149,27 @@ func RegisterReportTools(server *mcp.Server, client *chatwoot.Client) {
 		Description: "Get per-inbox performance metrics. Provide since/until as dates (YYYY-MM-DD). Defaults to last 7 days.",
 	}, func(ctx context.Context, req *mcp.CallToolRequest, input GetInboxSummaryInput) (*mcp.CallToolResult, any, error) {
 		since, until := parseDateRange(input.Since, input.Until)
-		inboxes, err := client.GetInboxSummary(ctx, since, until)
+		entries, err := client.GetInboxSummary(ctx, since, until)
 		if err != nil {
 			return errorResult(err), nil, nil
 		}
+		// Build inbox name map
+		inboxNames := map[int]string{}
+		if inboxes, err := client.ListInboxes(ctx); err == nil {
+			for _, i := range inboxes {
+				inboxNames[i.ID] = i.Name
+			}
+		}
 		var sb strings.Builder
 		sb.WriteString(fmt.Sprintf("Inbox Summary (%s to %s)\n\n", time.Unix(since, 0).Format("2006-01-02"), time.Unix(until, 0).Format("2006-01-02")))
-		for _, i := range inboxes {
-			sb.WriteString(fmt.Sprintf("- [%d] %s\n", i.ID, i.Name))
-			sb.WriteString(fmt.Sprintf("    Conversations: %d, Resolutions: %d\n", i.ConversationsCount, i.ResolutionsCount))
-			sb.WriteString(fmt.Sprintf("    Avg FRT: %.1fs, Avg Resolution: %.1fs\n", i.AvgFirstResponseTime, i.AvgResolutionTime))
-			sb.WriteString(fmt.Sprintf("    Messages in: %d, out: %d\n", i.IncomingMessagesCount, i.OutgoingMessagesCount))
+		for _, e := range entries {
+			label := inboxNames[e.ID]
+			if label == "" {
+				label = fmt.Sprintf("Inbox #%d", e.ID)
+			}
+			formatSummaryEntry(&sb, label, e)
 		}
-		if len(inboxes) == 0 {
+		if len(entries) == 0 {
 			sb.WriteString("No inbox data available.")
 		}
 		return textResult(sb.String()), nil, nil
@@ -148,9 +189,8 @@ func RegisterReportTools(server *mcp.Server, client *chatwoot.Client) {
 		sb.WriteString(fmt.Sprintf("Channel Summary (%s to %s)\n\n", time.Unix(since, 0).Format("2006-01-02"), time.Unix(until, 0).Format("2006-01-02")))
 		for _, ch := range channels {
 			sb.WriteString(fmt.Sprintf("- %s\n", ch.ChannelType))
-			sb.WriteString(fmt.Sprintf("    Conversations: %d, Resolutions: %d\n", ch.ConversationsCount, ch.ResolutionsCount))
-			sb.WriteString(fmt.Sprintf("    Avg FRT: %.1fs, Avg Resolution: %.1fs\n", ch.AvgFirstResponseTime, ch.AvgResolutionTime))
-			sb.WriteString(fmt.Sprintf("    Messages in: %d, out: %d\n", ch.IncomingMessagesCount, ch.OutgoingMessagesCount))
+			sb.WriteString(fmt.Sprintf("    Conversations: %d, Resolved: %d\n", ch.ConversationsCount, ch.ResolvedConversationsCount))
+			sb.WriteString(fmt.Sprintf("    Avg FRT: %s, Avg Resolution: %s\n", fmtFloat(ch.AvgFirstResponseTime), fmtFloat(ch.AvgResolutionTime)))
 		}
 		if len(channels) == 0 {
 			sb.WriteString("No channel data available.")

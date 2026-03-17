@@ -723,11 +723,11 @@ func (c *Client) GetReportsSummary(ctx context.Context, since, until int64, repo
 }
 
 // GetAgentSummary returns per-agent report metrics for the given time range.
-func (c *Client) GetAgentSummary(ctx context.Context, since, until int64) ([]AgentSummary, error) {
+func (c *Client) GetAgentSummary(ctx context.Context, since, until int64) ([]SummaryReportEntry, error) {
 	params := url.Values{}
 	params.Set("since", strconv.FormatInt(since, 10))
 	params.Set("until", strconv.FormatInt(until, 10))
-	var agents []AgentSummary
+	var agents []SummaryReportEntry
 	path := c.accountPathV2("/summary_reports/agent") + "?" + params.Encode()
 	if err := c.do(ctx, http.MethodGet, path, nil, &agents); err != nil {
 		return nil, err
@@ -736,11 +736,11 @@ func (c *Client) GetAgentSummary(ctx context.Context, since, until int64) ([]Age
 }
 
 // GetTeamSummary returns per-team report metrics for the given time range.
-func (c *Client) GetTeamSummary(ctx context.Context, since, until int64) ([]TeamSummary, error) {
+func (c *Client) GetTeamSummary(ctx context.Context, since, until int64) ([]SummaryReportEntry, error) {
 	params := url.Values{}
 	params.Set("since", strconv.FormatInt(since, 10))
 	params.Set("until", strconv.FormatInt(until, 10))
-	var teams []TeamSummary
+	var teams []SummaryReportEntry
 	path := c.accountPathV2("/summary_reports/team") + "?" + params.Encode()
 	if err := c.do(ctx, http.MethodGet, path, nil, &teams); err != nil {
 		return nil, err
@@ -749,11 +749,11 @@ func (c *Client) GetTeamSummary(ctx context.Context, since, until int64) ([]Team
 }
 
 // GetInboxSummary returns per-inbox report metrics for the given time range.
-func (c *Client) GetInboxSummary(ctx context.Context, since, until int64) ([]InboxSummary, error) {
+func (c *Client) GetInboxSummary(ctx context.Context, since, until int64) ([]SummaryReportEntry, error) {
 	params := url.Values{}
 	params.Set("since", strconv.FormatInt(since, 10))
 	params.Set("until", strconv.FormatInt(until, 10))
-	var inboxes []InboxSummary
+	var inboxes []SummaryReportEntry
 	path := c.accountPathV2("/summary_reports/inbox") + "?" + params.Encode()
 	if err := c.do(ctx, http.MethodGet, path, nil, &inboxes); err != nil {
 		return nil, err
