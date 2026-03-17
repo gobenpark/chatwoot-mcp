@@ -223,7 +223,7 @@ func RegisterContactTools(server *mcp.Server, client *chatwoot.Client) {
 				assignee = conv.Meta.Assignee.Name
 			}
 			sb.WriteString(fmt.Sprintf("- #%d [%s] → %s (msgs: %d)\n",
-				conv.ID, conv.Status, assignee, conv.MessagesCount))
+				conv.ID, conv.Status, assignee, len(conv.Messages)))
 		}
 		if len(resp.Payload) == 0 {
 			sb.WriteString("No conversations found for this contact.")

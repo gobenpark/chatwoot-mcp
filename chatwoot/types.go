@@ -57,19 +57,20 @@ func (ft FlexTime) String() string {
 
 // Conversation represents a Chatwoot conversation.
 type Conversation struct {
-	ID                  int              `json:"id"`
-	AccountID           int              `json:"account_id"`
-	InboxID             int              `json:"inbox_id"`
-	Status              string           `json:"status"`
-	MessagesCount       int              `json:"messages_count"`
-	UnreadMessagesCount int              `json:"unread_messages_count"`
-	AssigneeID          *int             `json:"assignee_id"`
-	Meta                ConversationMeta `json:"meta"`
-	Labels              []string         `json:"labels"`
-	Priority            *string          `json:"priority"`
-	CustomAttributes    map[string]any   `json:"custom_attributes"`
-	LastActivityAt      FlexTime         `json:"last_activity_at"`
-	CreatedAt           FlexTime         `json:"created_at"`
+	ID               int              `json:"id"`
+	AccountID        int              `json:"account_id"`
+	InboxID          int              `json:"inbox_id"`
+	Status           string           `json:"status"`
+	Messages         []Message        `json:"messages"`
+	UnreadCount      int              `json:"unread_count"`
+	AssigneeID       *int             `json:"assignee_id"`
+	Meta             ConversationMeta `json:"meta"`
+	Labels           []string         `json:"labels"`
+	Priority         *string          `json:"priority"`
+	CustomAttributes map[string]any   `json:"custom_attributes"`
+	LastActivityAt   FlexTime         `json:"last_activity_at"`
+	CreatedAt        FlexTime         `json:"created_at"`
+	Timestamp        FlexTime         `json:"timestamp"`
 }
 
 // ConversationMeta holds sender and assignee info.

@@ -111,7 +111,7 @@ func RegisterConversationTools(server *mcp.Server, client *chatwoot.Client) {
 			}
 			sb.WriteString(fmt.Sprintf("- #%d [%s] %s → %s%s (msgs: %d, unread: %d)\n",
 				conv.ID, conv.Status, conv.Meta.Sender.Name, assignee, labels,
-				conv.MessagesCount, conv.UnreadMessagesCount))
+				len(conv.Messages), conv.UnreadCount))
 		}
 		if len(resp.Data.Payload) == 0 {
 			sb.WriteString("No conversations found.")
@@ -144,7 +144,7 @@ func RegisterConversationTools(server *mcp.Server, client *chatwoot.Client) {
 		if len(conv.Labels) > 0 {
 			sb.WriteString(fmt.Sprintf("Labels: %s\n", strings.Join(conv.Labels, ", ")))
 		}
-		sb.WriteString(fmt.Sprintf("Messages: %d (unread: %d)\n", conv.MessagesCount, conv.UnreadMessagesCount))
+		sb.WriteString(fmt.Sprintf("Messages: %d (unread: %d)\n", len(conv.Messages), conv.UnreadCount))
 		if conv.CreatedAt.Valid {
 			sb.WriteString(fmt.Sprintf("Created: %s\n", conv.CreatedAt.Format(time.RFC3339)))
 		}
@@ -217,7 +217,7 @@ func RegisterConversationTools(server *mcp.Server, client *chatwoot.Client) {
 				assignee = conv.Meta.Assignee.Name
 			}
 			sb.WriteString(fmt.Sprintf("- #%d [%s] %s → %s (msgs: %d)\n",
-				conv.ID, conv.Status, conv.Meta.Sender.Name, assignee, conv.MessagesCount))
+				conv.ID, conv.Status, conv.Meta.Sender.Name, assignee, len(conv.Messages)))
 		}
 		if len(resp.Data.Payload) == 0 {
 			sb.WriteString("No conversations match the filter.")
