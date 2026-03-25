@@ -185,7 +185,7 @@ func RegisterConversationTools(server *mcp.Server, client *chatwoot.Client) {
 	// --- filter_conversations ---
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "filter_conversations",
-		Description: "Filter conversations using advanced criteria. Each filter has attribute_key (status, assignee_id, inbox_id, team_id, label, priority, etc.), filter_operator (equal_to, not_equal_to, contains, etc.), values (array), and query_operator (AND/OR) to chain filters.",
+		Description: "Filter conversations using advanced criteria. Each filter has attribute_key (status, assignee_id, inbox_id, team_id, label, priority, created_at, last_activity_at, etc.), filter_operator (equal_to, not_equal_to, contains, is_greater_than, is_less_than, days_before, etc.), values (array), and query_operator (AND/OR) to chain filters.",
 	}, func(ctx context.Context, req *mcp.CallToolRequest, input FilterConversationsInput) (*mcp.CallToolResult, any, error) {
 		payload := make([]chatwoot.ConversationFilterPayload, len(input.Payload))
 		for i, p := range input.Payload {
