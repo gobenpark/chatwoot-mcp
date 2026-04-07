@@ -100,7 +100,7 @@ func RegisterAutomationTools(server *mcp.Server, client *chatwoot.Client) {
 		Name:        "list_custom_attributes",
 		Description: "List all custom attribute definitions (for conversations and contacts).",
 	}, func(ctx context.Context, req *mcp.CallToolRequest, input ListCustomAttributesInput) (*mcp.CallToolResult, any, error) {
-		attrs, err := client.ListCustomAttributes(ctx)
+		attrs, err := client.ListCustomAttributes(ctx, -1)
 		if err != nil {
 			return errorResult(err), nil, nil
 		}
@@ -124,7 +124,7 @@ func RegisterAutomationTools(server *mcp.Server, client *chatwoot.Client) {
 		Name:        "list_custom_filters",
 		Description: "List saved custom filters. filter_type: 'conversation' or 'contact'.",
 	}, func(ctx context.Context, req *mcp.CallToolRequest, input ListCustomFiltersInput) (*mcp.CallToolResult, any, error) {
-		filters, err := client.ListCustomFilters(ctx)
+		filters, err := client.ListCustomFilters(ctx, input.FilterType)
 		if err != nil {
 			return errorResult(err), nil, nil
 		}

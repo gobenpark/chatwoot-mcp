@@ -37,17 +37,17 @@ type GetChannelSummaryInput struct {
 	Until string `json:"until,omitempty"`
 }
 
-func fmtFloat(v *float64) string {
-	if v == nil {
+func fmtMetric(v *string) string {
+	if v == nil || *v == "" {
 		return "N/A"
 	}
-	return fmt.Sprintf("%.1fs", *v)
+	return *v
 }
 
 func formatSummaryEntry(sb *strings.Builder, label string, e chatwoot.SummaryReportEntry) {
 	sb.WriteString(fmt.Sprintf("- [%d] %s\n", e.ID, label))
 	sb.WriteString(fmt.Sprintf("    Conversations: %d, Resolved: %d\n", e.ConversationsCount, e.ResolvedConversationsCount))
-	sb.WriteString(fmt.Sprintf("    Avg FRT: %s, Avg Resolution: %s\n", fmtFloat(e.AvgFirstResponseTime), fmtFloat(e.AvgResolutionTime)))
+	sb.WriteString(fmt.Sprintf("    Avg FRT: %s, Avg Resolution: %s\n", fmtMetric(e.AvgFirstResponseTime), fmtMetric(e.AvgResolutionTime)))
 }
 
 // RegisterReportTools registers report-related tools on the MCP server.
@@ -70,8 +70,8 @@ func RegisterReportTools(server *mcp.Server, client *chatwoot.Client) {
 		sb.WriteString(fmt.Sprintf("Resolutions: %d\n", summary.ResolutionsCount))
 		sb.WriteString(fmt.Sprintf("Incoming messages: %d\n", summary.IncomingMessagesCount))
 		sb.WriteString(fmt.Sprintf("Outgoing messages: %d\n", summary.OutgoingMessagesCount))
-		sb.WriteString(fmt.Sprintf("Avg first response time: %s\n", fmtFloat(summary.AvgFirstResponseTime)))
-		sb.WriteString(fmt.Sprintf("Avg resolution time: %s\n", fmtFloat(summary.AvgResolutionTime)))
+		sb.WriteString(fmt.Sprintf("Avg first response time: %s\n", fmtMetric(summary.AvgFirstResponseTime)))
+		sb.WriteString(fmt.Sprintf("Avg resolution time: %s\n", fmtMetric(summary.AvgResolutionTime)))
 		if summary.Previous != nil {
 			sb.WriteString(fmt.Sprintf("\nPrevious period: %d conversations, %d resolutions\n",
 				summary.Previous.ConversationsCount, summary.Previous.ResolutionsCount))
@@ -190,7 +190,7 @@ func RegisterReportTools(server *mcp.Server, client *chatwoot.Client) {
 		for _, ch := range channels {
 			sb.WriteString(fmt.Sprintf("- %s\n", ch.ChannelType))
 			sb.WriteString(fmt.Sprintf("    Conversations: %d, Resolved: %d\n", ch.ConversationsCount, ch.ResolvedConversationsCount))
-			sb.WriteString(fmt.Sprintf("    Avg FRT: %s, Avg Resolution: %s\n", fmtFloat(ch.AvgFirstResponseTime), fmtFloat(ch.AvgResolutionTime)))
+			sb.WriteString(fmt.Sprintf("    Avg FRT: %s, Avg Resolution: %s\n", fmtMetric(ch.AvgFirstResponseTime), fmtMetric(ch.AvgResolutionTime)))
 		}
 		if len(channels) == 0 {
 			sb.WriteString("No channel data available.")

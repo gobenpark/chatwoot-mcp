@@ -148,6 +148,9 @@ func (c *Client) CreateConversation(ctx context.Context, req CreateConversationR
 func (c *Client) FilterConversations(ctx context.Context, req ConversationFilterRequest) (*ConversationListResponse, error) {
 	var resp ConversationListResponse
 	path := c.accountPath("/conversations/filter")
+	if req.Page != nil && *req.Page > 0 {
+		path += "?page=" + strconv.Itoa(*req.Page)
+	}
 	if err := c.do(ctx, http.MethodPost, path, req, &resp); err != nil {
 		return nil, err
 	}
@@ -288,22 +291,28 @@ func (c *Client) SearchContacts(ctx context.Context, query string) (*ContactSear
 
 // CreateContact creates a new contact.
 func (c *Client) CreateContact(ctx context.Context, req CreateContactRequest) (*Contact, error) {
-	var contact Contact
+	var resp struct {
+		Payload struct {
+			Contact Contact `json:"contact"`
+		} `json:"payload"`
+	}
 	path := c.accountPath("/contacts")
-	if err := c.do(ctx, http.MethodPost, path, req, &contact); err != nil {
+	if err := c.do(ctx, http.MethodPost, path, req, &resp); err != nil {
 		return nil, err
 	}
-	return &contact, nil
+	return &resp.Payload.Contact, nil
 }
 
 // UpdateContact updates an existing contact.
 func (c *Client) UpdateContact(ctx context.Context, contactID int, req UpdateContactRequest) (*Contact, error) {
-	var contact Contact
+	var resp struct {
+		Payload Contact `json:"payload"`
+	}
 	path := c.accountPath(fmt.Sprintf("/contacts/%d", contactID))
-	if err := c.do(ctx, http.MethodPut, path, req, &contact); err != nil {
+	if err := c.do(ctx, http.MethodPut, path, req, &resp); err != nil {
 		return nil, err
 	}
-	return &contact, nil
+	return &resp.Payload, nil
 }
 
 // DeleteContact deletes a contact by ID.
@@ -316,6 +325,9 @@ func (c *Client) DeleteContact(ctx context.Context, contactID int) error {
 func (c *Client) FilterContacts(ctx context.Context, req ContactFilterRequest) (*ContactListResponse, error) {
 	var resp ContactListResponse
 	path := c.accountPath("/contacts/filter")
+	if req.Page != nil && *req.Page > 0 {
+		path += "?page=" + strconv.Itoa(*req.Page)
+	}
 	if err := c.do(ctx, http.MethodPost, path, req, &resp); err != nil {
 		return nil, err
 	}
@@ -334,12 +346,14 @@ func (c *Client) GetContactConversations(ctx context.Context, contactID int) (*C
 
 // MergeContacts merges two contacts together.
 func (c *Client) MergeContacts(ctx context.Context, req MergeContactsRequest) (*Contact, error) {
-	var contact Contact
+	var resp struct {
+		Payload Contact `json:"payload"`
+	}
 	path := c.accountPath("/actions/contact_merge")
-	if err := c.do(ctx, http.MethodPost, path, req, &contact); err != nil {
+	if err := c.do(ctx, http.MethodPost, path, req, &resp); err != nil {
 		return nil, err
 	}
-	return &contact, nil
+	return &resp.Payload, nil
 }
 
 // GetContactLabels returns labels for a contact.
@@ -544,9 +558,12 @@ func (c *Client) DeleteCannedResponse(ctx context.Context, id int) error {
 // ---------------------------------------------------------------------------
 
 // ListCustomAttributes returns all custom attribute definitions for the account.
-func (c *Client) ListCustomAttributes(ctx context.Context) ([]CustomAttributeDefinition, error) {
+func (c *Client) ListCustomAttributes(ctx context.Context, attributeModel int) ([]CustomAttributeDefinition, error) {
 	var attrs []CustomAttributeDefinition
 	path := c.accountPath("/custom_attribute_definitions")
+	if attributeModel >= 0 {
+		path += "?attribute_model=" + strconv.Itoa(attributeModel)
+	}
 	if err := c.do(ctx, http.MethodGet, path, nil, &attrs); err != nil {
 		return nil, err
 	}
@@ -584,9 +601,12 @@ func (c *Client) DeleteCustomAttribute(ctx context.Context, id int) error {
 // ---------------------------------------------------------------------------
 
 // ListCustomFilters returns all custom filters for the account.
-func (c *Client) ListCustomFilters(ctx context.Context) ([]CustomFilter, error) {
+func (c *Client) ListCustomFilters(ctx context.Context, filterType string) ([]CustomFilter, error) {
 	var filters []CustomFilter
 	path := c.accountPath("/custom_filters")
+	if filterType != "" {
+		path += "?filter_type=" + url.QueryEscape(filterType)
+	}
 	if err := c.do(ctx, http.MethodGet, path, nil, &filters); err != nil {
 		return nil, err
 	}

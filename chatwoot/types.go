@@ -151,7 +151,7 @@ type ConversationInitialMessage struct {
 // ConversationFilterRequest is the payload for filtering conversations.
 type ConversationFilterRequest struct {
 	Payload []ConversationFilterPayload `json:"payload"`
-	Page    *int                        `json:"page,omitempty"`
+	Page    *int                        `json:"-"`
 }
 
 // ConversationFilterPayload describes a single filter condition.
@@ -169,17 +169,17 @@ type ConversationMetaResponse struct {
 
 // ConversationStatusCounts holds the count of conversations per status.
 type ConversationStatusCounts struct {
-	Open       int `json:"open"`
-	Resolved   int `json:"resolved"`
-	Pending    int `json:"pending"`
-	Snoozed    int `json:"snoozed"`
-	AllCount   int `json:"all_count"`
-	Unassigned int `json:"unassigned"`
+	MineCount       int `json:"mine_count"`
+	AssignedCount   int `json:"assigned_count"`
+	UnassignedCount int `json:"unassigned_count"`
+	AllCount        int `json:"all_count"`
 }
 
 // UpdateConversationRequest is the payload for updating conversation custom attributes.
 type UpdateConversationRequest struct {
-	CustomAttributes map[string]any `json:"custom_attributes"`
+	Priority         *string        `json:"priority,omitempty"`
+	SLAPolicyID      *int           `json:"sla_policy_id,omitempty"`
+	CustomAttributes map[string]any `json:"custom_attributes,omitempty"`
 }
 
 // TogglePriorityRequest is the payload for setting conversation priority.
@@ -189,7 +189,8 @@ type TogglePriorityRequest struct {
 
 // ToggleStatusRequest is the payload for toggling conversation status.
 type ToggleStatusRequest struct {
-	Status string `json:"status"`
+	Status       string `json:"status"`
+	SnoozedUntil *int64 `json:"snoozed_until,omitempty"`
 }
 
 // AssignConversationRequest is the payload for assigning a conversation.
@@ -291,7 +292,7 @@ type UpdateContactRequest struct {
 // ContactFilterRequest is the payload for filtering contacts.
 type ContactFilterRequest struct {
 	Payload []ContactFilterPayload `json:"payload"`
-	Page    *int                   `json:"page,omitempty"`
+	Page    *int                   `json:"-"`
 }
 
 // ContactFilterPayload describes a single filter condition for contacts.
@@ -423,14 +424,14 @@ type CreateCustomAttributeRequest struct {
 type CustomFilter struct {
 	ID         int              `json:"id"`
 	Name       string           `json:"name"`
-	FilterType string           `json:"filter_type"`
+	FilterType string           `json:"type"`
 	Query      json.RawMessage  `json:"query"`
 }
 
 // CreateCustomFilterRequest is the payload for creating a custom filter.
 type CreateCustomFilterRequest struct {
 	Name       string          `json:"name"`
-	FilterType string          `json:"filter_type"`
+	FilterType string          `json:"type"`
 	Query      json.RawMessage `json:"query"`
 }
 
@@ -447,7 +448,7 @@ type AutomationRule struct {
 	Conditions  json.RawMessage  `json:"conditions"`
 	Actions     json.RawMessage  `json:"actions"`
 	Active      bool             `json:"active"`
-	CreatedAt   FlexTime         `json:"created_at"`
+	CreatedAt   FlexTime         `json:"created_on"`
 }
 
 // CreateAutomationRuleRequest is the payload for creating an automation rule.
@@ -492,10 +493,10 @@ type ReportSummary struct {
 	ConversationsCount    int      `json:"conversations_count"`
 	IncomingMessagesCount int      `json:"incoming_messages_count"`
 	OutgoingMessagesCount int      `json:"outgoing_messages_count"`
-	AvgFirstResponseTime  *float64 `json:"avg_first_response_time"`
-	AvgResolutionTime     *float64 `json:"avg_resolution_time"`
+	AvgFirstResponseTime  *string `json:"avg_first_response_time"`
+	AvgResolutionTime     *string `json:"avg_resolution_time"`
 	ResolutionsCount      int      `json:"resolutions_count"`
-	AvgReplyTime          *float64 `json:"reply_time"`
+	AvgReplyTime          *string `json:"avg_reply_time"`
 	Previous              *ReportSummaryPrevious `json:"previous,omitempty"`
 }
 
@@ -504,29 +505,30 @@ type ReportSummaryPrevious struct {
 	ConversationsCount    int      `json:"conversations_count"`
 	IncomingMessagesCount int      `json:"incoming_messages_count"`
 	OutgoingMessagesCount int      `json:"outgoing_messages_count"`
-	AvgFirstResponseTime  *float64 `json:"avg_first_response_time"`
-	AvgResolutionTime     *float64 `json:"avg_resolution_time"`
+	AvgFirstResponseTime  *string `json:"avg_first_response_time"`
+	AvgResolutionTime     *string `json:"avg_resolution_time"`
 	ResolutionsCount      int      `json:"resolutions_count"`
+	AvgReplyTime          *string `json:"avg_reply_time"`
 }
 
 // SummaryReportEntry contains report metrics for an agent, inbox, or team.
 type SummaryReportEntry struct {
-	ID                         int      `json:"id"`
-	ConversationsCount         int      `json:"conversations_count"`
-	ResolvedConversationsCount int      `json:"resolved_conversations_count"`
-	AvgResolutionTime          *float64 `json:"avg_resolution_time"`
-	AvgFirstResponseTime       *float64 `json:"avg_first_response_time"`
-	AvgReplyTime               *float64 `json:"avg_reply_time"`
+	ID                         int     `json:"id"`
+	ConversationsCount         int     `json:"conversations_count"`
+	ResolvedConversationsCount int     `json:"resolved_conversations_count"`
+	AvgResolutionTime          *string `json:"avg_resolution_time"`
+	AvgFirstResponseTime       *string `json:"avg_first_response_time"`
+	AvgReplyTime               *string `json:"avg_reply_time"`
 }
 
 // ChannelSummary contains report metrics grouped by channel type.
 type ChannelSummary struct {
-	ChannelType                string   `json:"channel_type"`
-	ConversationsCount         int      `json:"conversations_count"`
-	ResolvedConversationsCount int      `json:"resolved_conversations_count"`
-	AvgResolutionTime          *float64 `json:"avg_resolution_time"`
-	AvgFirstResponseTime       *float64 `json:"avg_first_response_time"`
-	AvgReplyTime               *float64 `json:"avg_reply_time"`
+	ChannelType                string  `json:"channel_type"`
+	ConversationsCount         int     `json:"conversations_count"`
+	ResolvedConversationsCount int     `json:"resolved_conversations_count"`
+	AvgResolutionTime          *string `json:"avg_resolution_time"`
+	AvgFirstResponseTime       *string `json:"avg_first_response_time"`
+	AvgReplyTime               *string `json:"avg_reply_time"`
 }
 
 // ---------------------------------------------------------------------------
@@ -720,8 +722,10 @@ type AuditLog struct {
 
 // AuditLogListResponse is the response from list audit logs.
 type AuditLogListResponse struct {
-	Payload []AuditLog     `json:"payload"`
-	Meta    PaginationMeta `json:"meta"`
+	AuditLogs    []AuditLog `json:"audit_logs"`
+	CurrentPage  int        `json:"current_page"`
+	PerPage      int        `json:"per_page"`
+	TotalEntries int        `json:"total_entries"`
 }
 
 // ---------------------------------------------------------------------------

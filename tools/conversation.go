@@ -246,11 +246,9 @@ func RegisterConversationTools(server *mcp.Server, client *chatwoot.Client) {
 		var sb strings.Builder
 		sb.WriteString("Conversation counts:\n")
 		sb.WriteString(fmt.Sprintf("  All: %d\n", meta.Meta.AllCount))
-		sb.WriteString(fmt.Sprintf("  Open: %d\n", meta.Meta.Open))
-		sb.WriteString(fmt.Sprintf("  Pending: %d\n", meta.Meta.Pending))
-		sb.WriteString(fmt.Sprintf("  Resolved: %d\n", meta.Meta.Resolved))
-		sb.WriteString(fmt.Sprintf("  Snoozed: %d\n", meta.Meta.Snoozed))
-		sb.WriteString(fmt.Sprintf("  Unassigned: %d\n", meta.Meta.Unassigned))
+		sb.WriteString(fmt.Sprintf("  Mine: %d\n", meta.Meta.MineCount))
+		sb.WriteString(fmt.Sprintf("  Assigned: %d\n", meta.Meta.AssignedCount))
+		sb.WriteString(fmt.Sprintf("  Unassigned: %d\n", meta.Meta.UnassignedCount))
 		return textResult(sb.String()), nil, nil
 	})
 

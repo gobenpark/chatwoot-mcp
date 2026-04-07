@@ -29,7 +29,7 @@ func RegisterAuditTools(server *mcp.Server, client *chatwoot.Client) {
 		}
 		var sb strings.Builder
 		sb.WriteString(fmt.Sprintf("Audit Logs (page %d)\n\n", input.Page))
-		for _, log := range resp.Payload {
+		for _, log := range resp.AuditLogs {
 			username := "(system)"
 			if log.Username != nil {
 				username = *log.Username
@@ -43,7 +43,7 @@ func RegisterAuditTools(server *mcp.Server, client *chatwoot.Client) {
 				sb.WriteString(fmt.Sprintf("    Changes: %s\n", string(log.AuditedChanges)))
 			}
 		}
-		if len(resp.Payload) == 0 {
+		if len(resp.AuditLogs) == 0 {
 			sb.WriteString("No audit log entries found.")
 		}
 		return textResult(sb.String()), nil, nil
