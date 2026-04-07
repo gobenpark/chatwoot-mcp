@@ -219,8 +219,8 @@ func RegisterConversationTools(server *mcp.Server, client *chatwoot.Client) {
 			return errorResult(err), nil, nil
 		}
 		var sb strings.Builder
-		sb.WriteString(fmt.Sprintf("Filter results: %d conversations\n\n", len(resp.Data.Payload)))
-		for _, conv := range resp.Data.Payload {
+		sb.WriteString(fmt.Sprintf("Filter results: %d conversations\n\n", len(resp.Payload)))
+		for _, conv := range resp.Payload {
 			assignee := "(unassigned)"
 			if conv.Meta.Assignee != nil {
 				assignee = conv.Meta.Assignee.Name
@@ -228,7 +228,7 @@ func RegisterConversationTools(server *mcp.Server, client *chatwoot.Client) {
 			sb.WriteString(fmt.Sprintf("- #%d [%s] %s → %s (msgs: %d)\n",
 				conv.ID, conv.Status, conv.Meta.Sender.Name, assignee, len(conv.Messages)))
 		}
-		if len(resp.Data.Payload) == 0 {
+		if len(resp.Payload) == 0 {
 			sb.WriteString("No conversations match the filter.")
 		}
 		return textResult(sb.String()), nil, nil

@@ -145,8 +145,8 @@ func (c *Client) CreateConversation(ctx context.Context, req CreateConversationR
 }
 
 // FilterConversations filters conversations by the given criteria.
-func (c *Client) FilterConversations(ctx context.Context, req ConversationFilterRequest) (*ConversationListResponse, error) {
-	var resp ConversationListResponse
+func (c *Client) FilterConversations(ctx context.Context, req ConversationFilterRequest) (*ConversationFilterResponse, error) {
+	var resp ConversationFilterResponse
 	path := c.accountPath("/conversations/filter")
 	if req.Page != nil && *req.Page > 0 {
 		path += "?page=" + strconv.Itoa(*req.Page)

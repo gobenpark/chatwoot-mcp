@@ -92,12 +92,19 @@ type MetaAgent struct {
 }
 
 // ConversationListResponse is the response from list conversations.
+// ListConversations wraps in {"data": {...}}, FilterConversations returns flat.
 type ConversationListResponse struct {
 	Data DataPayload `json:"data"`
 }
 
 // DataPayload wraps the conversation list with metadata.
 type DataPayload struct {
+	Meta    PaginationMeta `json:"meta"`
+	Payload []Conversation `json:"payload"`
+}
+
+// ConversationFilterResponse is the flat response from filter conversations.
+type ConversationFilterResponse struct {
 	Meta    PaginationMeta `json:"meta"`
 	Payload []Conversation `json:"payload"`
 }
