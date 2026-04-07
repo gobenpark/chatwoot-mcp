@@ -158,7 +158,7 @@ type ConversationFilterRequest struct {
 type ConversationFilterPayload struct {
 	AttributeKey   string   `json:"attribute_key"`
 	FilterOperator string   `json:"filter_operator"`
-	Values         []string `json:"values"`
+	Values         []any    `json:"values"`
 	QueryOperator  *string  `json:"query_operator,omitempty"`
 }
 
@@ -298,7 +298,7 @@ type ContactFilterRequest struct {
 type ContactFilterPayload struct {
 	AttributeKey   string   `json:"attribute_key"`
 	FilterOperator string   `json:"filter_operator"`
-	Values         []string `json:"values"`
+	Values         []any    `json:"values"`
 	QueryOperator  *string  `json:"query_operator,omitempty"`
 }
 

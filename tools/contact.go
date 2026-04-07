@@ -3,6 +3,7 @@ package tools
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/gobenpark/chatwoot-mcp/chatwoot"
@@ -177,10 +178,18 @@ func RegisterContactTools(server *mcp.Server, client *chatwoot.Client) {
 	}, func(ctx context.Context, req *mcp.CallToolRequest, input FilterContactsInput) (*mcp.CallToolResult, any, error) {
 		payload := make([]chatwoot.ContactFilterPayload, len(input.Payload))
 		for i, p := range input.Payload {
+			values := make([]any, len(p.Values))
+			for j, v := range p.Values {
+				if n, err := strconv.Atoi(v); err == nil {
+					values[j] = n
+				} else {
+					values[j] = v
+				}
+			}
 			fp := chatwoot.ContactFilterPayload{
 				AttributeKey:   p.AttributeKey,
 				FilterOperator: p.FilterOperator,
-				Values:         p.Values,
+				Values:         values,
 			}
 			if p.QueryOperator != "" {
 				fp.QueryOperator = &p.QueryOperator
