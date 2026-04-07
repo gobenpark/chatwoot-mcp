@@ -266,12 +266,14 @@ func (c *Client) ListContacts(ctx context.Context, page int) (*ContactListRespon
 
 // GetContact returns a single contact by ID.
 func (c *Client) GetContact(ctx context.Context, contactID int) (*Contact, error) {
-	var contact Contact
+	var resp struct {
+		Payload Contact `json:"payload"`
+	}
 	path := c.accountPath(fmt.Sprintf("/contacts/%d", contactID))
-	if err := c.do(ctx, http.MethodGet, path, nil, &contact); err != nil {
+	if err := c.do(ctx, http.MethodGet, path, nil, &resp); err != nil {
 		return nil, err
 	}
-	return &contact, nil
+	return &resp.Payload, nil
 }
 
 // SearchContacts searches contacts by query string.
