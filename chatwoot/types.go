@@ -57,20 +57,32 @@ func (ft FlexTime) String() string {
 
 // Conversation represents a Chatwoot conversation.
 type Conversation struct {
-	ID               int              `json:"id"`
-	AccountID        int              `json:"account_id"`
-	InboxID          int              `json:"inbox_id"`
-	Status           string           `json:"status"`
-	Messages         []Message        `json:"messages"`
-	UnreadCount      int              `json:"unread_count"`
-	AssigneeID       *int             `json:"assignee_id"`
-	Meta             ConversationMeta `json:"meta"`
-	Labels           []string         `json:"labels"`
-	Priority         *string          `json:"priority"`
-	CustomAttributes map[string]any   `json:"custom_attributes"`
-	LastActivityAt   FlexTime         `json:"last_activity_at"`
-	CreatedAt        FlexTime         `json:"created_at"`
-	Timestamp        FlexTime         `json:"timestamp"`
+	ID                   int              `json:"id"`
+	UUID                 string           `json:"uuid"`
+	AccountID            int              `json:"account_id"`
+	InboxID              int              `json:"inbox_id"`
+	Status               string           `json:"status"`
+	Messages             []Message        `json:"messages"`
+	UnreadCount          int              `json:"unread_count"`
+	AssigneeID           *int             `json:"assignee_id"`
+	Meta                 ConversationMeta `json:"meta"`
+	Labels               []string         `json:"labels"`
+	Priority             *string          `json:"priority"`
+	CustomAttributes     map[string]any   `json:"custom_attributes"`
+	AdditionalAttributes json.RawMessage  `json:"additional_attributes"`
+	Muted                bool             `json:"muted"`
+	CanReply             bool             `json:"can_reply"`
+	SnoozedUntil         *FlexTime        `json:"snoozed_until"`
+	SLAPolicyID          *int             `json:"sla_policy_id"`
+	AgentLastSeenAt      FlexTime         `json:"agent_last_seen_at"`
+	AssigneeLastSeenAt   FlexTime         `json:"assignee_last_seen_at"`
+	ContactLastSeenAt    FlexTime         `json:"contact_last_seen_at"`
+	LastActivityAt       FlexTime         `json:"last_activity_at"`
+	CreatedAt            FlexTime         `json:"created_at"`
+	UpdatedAt            FlexTime         `json:"updated_at"`
+	Timestamp            FlexTime         `json:"timestamp"`
+	FirstReplyCreatedAt  *FlexTime        `json:"first_reply_created_at"`
+	WaitingSince         *FlexTime        `json:"waiting_since"`
 }
 
 // ConversationMeta holds sender and assignee info.
@@ -217,13 +229,22 @@ type ConversationLabelsRequest struct {
 
 // Message represents a Chatwoot message.
 type Message struct {
-	ID          int     `json:"id"`
-	Content     *string `json:"content"`
-	MessageType int     `json:"message_type"`
-	ContentType string  `json:"content_type"`
-	Private     bool    `json:"private"`
-	Sender      *Sender `json:"sender"`
-	CreatedAt   int64   `json:"created_at"`
+	ID                int             `json:"id"`
+	AccountID         int             `json:"account_id"`
+	InboxID           int             `json:"inbox_id"`
+	ConversationID    int             `json:"conversation_id"`
+	Content           *string         `json:"content"`
+	MessageType       int             `json:"message_type"`
+	ContentType       string          `json:"content_type"`
+	ContentAttributes json.RawMessage `json:"content_attributes"`
+	Status            string          `json:"status"`
+	Private           bool            `json:"private"`
+	Sender            *Sender         `json:"sender"`
+	SenderType        *string         `json:"sender_type"`
+	SenderID          *int            `json:"sender_id"`
+	SourceID          *string         `json:"source_id"`
+	CreatedAt         int64           `json:"created_at"`
+	UpdatedAt         string          `json:"updated_at"`
 }
 
 // Sender represents who sent a message.
@@ -240,9 +261,12 @@ type MessageListResponse struct {
 
 // SendMessageRequest is the payload for sending a message.
 type SendMessageRequest struct {
-	Content     string `json:"content"`
-	MessageType string `json:"message_type"`
-	Private     bool   `json:"private,omitempty"`
+	Content           string          `json:"content"`
+	MessageType       string          `json:"message_type"`
+	Private           bool            `json:"private,omitempty"`
+	ContentType       string          `json:"content_type,omitempty"`
+	ContentAttributes json.RawMessage `json:"content_attributes,omitempty"`
+	TemplateParams    json.RawMessage `json:"template_params,omitempty"`
 }
 
 // DeleteMessageResponse is the response after deleting a message.
@@ -256,14 +280,18 @@ type DeleteMessageResponse struct {
 
 // Contact represents a Chatwoot contact.
 type Contact struct {
-	ID               int            `json:"id"`
-	Name             string         `json:"name"`
-	Email            *string        `json:"email"`
-	PhoneNumber      *string        `json:"phone_number"`
-	Identifier       *string        `json:"identifier"`
-	CreatedAt        FlexTime       `json:"created_at"`
-	LastActivityAt   FlexTime       `json:"last_activity_at"`
-	CustomAttributes map[string]any `json:"custom_attributes"`
+	ID                   int             `json:"id"`
+	Name                 string          `json:"name"`
+	Email                *string         `json:"email"`
+	PhoneNumber          *string         `json:"phone_number"`
+	Identifier           *string         `json:"identifier"`
+	Thumbnail            string          `json:"thumbnail"`
+	AvailabilityStatus   string          `json:"availability_status"`
+	Blocked              bool            `json:"blocked"`
+	AdditionalAttributes json.RawMessage `json:"additional_attributes"`
+	CreatedAt            FlexTime        `json:"created_at"`
+	LastActivityAt       FlexTime        `json:"last_activity_at"`
+	CustomAttributes     map[string]any  `json:"custom_attributes"`
 }
 
 // ContactListResponse is the response from list contacts.
@@ -279,21 +307,29 @@ type ContactSearchResponse struct {
 
 // CreateContactRequest is the payload for creating a contact.
 type CreateContactRequest struct {
-	InboxID          int            `json:"inbox_id,omitempty"`
-	Name             string         `json:"name"`
-	Email            string         `json:"email,omitempty"`
-	PhoneNumber      string         `json:"phone_number,omitempty"`
-	Identifier       string         `json:"identifier,omitempty"`
-	CustomAttributes map[string]any `json:"custom_attributes,omitempty"`
+	InboxID              int            `json:"inbox_id,omitempty"`
+	Name                 string         `json:"name"`
+	Email                string         `json:"email,omitempty"`
+	PhoneNumber          string         `json:"phone_number,omitempty"`
+	Identifier           string         `json:"identifier,omitempty"`
+	Blocked              bool           `json:"blocked,omitempty"`
+	Avatar               string         `json:"avatar,omitempty"`
+	AvatarURL            string         `json:"avatar_url,omitempty"`
+	AdditionalAttributes map[string]any `json:"additional_attributes,omitempty"`
+	CustomAttributes     map[string]any `json:"custom_attributes,omitempty"`
 }
 
 // UpdateContactRequest is the payload for updating a contact.
 type UpdateContactRequest struct {
-	Name             *string        `json:"name,omitempty"`
-	Email            *string        `json:"email,omitempty"`
-	PhoneNumber      *string        `json:"phone_number,omitempty"`
-	Identifier       *string        `json:"identifier,omitempty"`
-	CustomAttributes map[string]any `json:"custom_attributes,omitempty"`
+	Name                 *string        `json:"name,omitempty"`
+	Email                *string        `json:"email,omitempty"`
+	PhoneNumber          *string        `json:"phone_number,omitempty"`
+	Identifier           *string        `json:"identifier,omitempty"`
+	Blocked              *bool          `json:"blocked,omitempty"`
+	Avatar               *string        `json:"avatar,omitempty"`
+	AvatarURL            *string        `json:"avatar_url,omitempty"`
+	AdditionalAttributes map[string]any `json:"additional_attributes,omitempty"`
+	CustomAttributes     map[string]any `json:"custom_attributes,omitempty"`
 }
 
 // ContactFilterRequest is the payload for filtering contacts.
@@ -327,11 +363,15 @@ type MergeContactsRequest struct {
 
 // Inbox represents a Chatwoot inbox.
 type Inbox struct {
-	ID          int    `json:"id"`
-	Name        string `json:"name"`
-	ChannelType string `json:"channel_type"`
-	AvatarURL   string `json:"avatar_url"`
-	Enabled     bool   `json:"enabled"`
+	ID                  int    `json:"id"`
+	Name                string `json:"name"`
+	ChannelType         string `json:"channel_type"`
+	AvatarURL           string `json:"avatar_url"`
+	WebsiteURL          string `json:"website_url"`
+	WidgetColor         string `json:"widget_color"`
+	Enabled             bool   `json:"enabled"`
+	GreetingEnabled     bool   `json:"greeting_enabled"`
+	WorkingHoursEnabled bool   `json:"working_hours_enabled"`
 }
 
 // InboxListResponse is the response from list inboxes.
@@ -346,10 +386,16 @@ type InboxListResponse struct {
 // Agent represents a Chatwoot agent.
 type Agent struct {
 	ID                 int    `json:"id"`
+	AccountID          int    `json:"account_id"`
 	Name               string `json:"name"`
+	AvailableName      string `json:"available_name"`
 	Email              string `json:"email"`
 	Role               string `json:"role"`
 	AvailabilityStatus string `json:"availability_status"`
+	AutoOffline        bool   `json:"auto_offline"`
+	Confirmed          bool   `json:"confirmed"`
+	Thumbnail          string `json:"thumbnail"`
+	CustomRoleID       *int   `json:"custom_role_id"`
 }
 
 // ---------------------------------------------------------------------------
@@ -406,21 +452,30 @@ type UpdateCannedResponseRequest struct {
 // CustomAttributeDefinition represents a custom attribute definition.
 // AttributeModel: 0 = conversation_attribute, 1 = contact_attribute.
 type CustomAttributeDefinition struct {
-	ID                   int    `json:"id"`
-	AttributeDisplayName string `json:"attribute_display_name"`
-	AttributeDisplayType string `json:"attribute_display_type"`
-	AttributeDescription string `json:"attribute_description"`
-	AttributeKey         string `json:"attribute_key"`
-	AttributeModel       any    `json:"attribute_model"`
+	ID                   int      `json:"id"`
+	AttributeDisplayName string   `json:"attribute_display_name"`
+	AttributeDisplayType string   `json:"attribute_display_type"`
+	AttributeDescription string   `json:"attribute_description"`
+	AttributeKey         string   `json:"attribute_key"`
+	AttributeModel       any      `json:"attribute_model"`
+	AttributeValues      []string `json:"attribute_values"`
+	RegexPattern         string   `json:"regex_pattern"`
+	RegexCue             string   `json:"regex_cue"`
+	DefaultValue         string   `json:"default_value"`
+	CreatedAt            string   `json:"created_at"`
+	UpdatedAt            string   `json:"updated_at"`
 }
 
 // CreateCustomAttributeRequest is the payload for creating a custom attribute definition.
 type CreateCustomAttributeRequest struct {
-	AttributeDisplayName string `json:"attribute_display_name"`
-	AttributeDisplayType string `json:"attribute_display_type"`
-	AttributeDescription string `json:"attribute_description"`
-	AttributeKey         string `json:"attribute_key"`
-	AttributeModel       int    `json:"attribute_model"`
+	AttributeDisplayName string   `json:"attribute_display_name"`
+	AttributeDisplayType int      `json:"attribute_display_type"`
+	AttributeDescription string   `json:"attribute_description"`
+	AttributeKey         string   `json:"attribute_key"`
+	AttributeModel       int      `json:"attribute_model"`
+	AttributeValues      []string `json:"attribute_values,omitempty"`
+	RegexPattern         string   `json:"regex_pattern,omitempty"`
+	RegexCue             string   `json:"regex_cue,omitempty"`
 }
 
 // ---------------------------------------------------------------------------
@@ -605,13 +660,20 @@ type Portal struct {
 
 // Article represents a help center article.
 type Article struct {
-	ID         int     `json:"id"`
-	Title      string  `json:"title"`
-	Content    *string `json:"content"`
-	Status     string  `json:"status"`
-	PortalID   int     `json:"portal_id"`
-	CategoryID *int    `json:"category_id"`
-	AuthorID   *int    `json:"author_id"`
+	ID                  int             `json:"id"`
+	Title               string          `json:"title"`
+	Content             *string         `json:"content"`
+	Slug                string          `json:"slug"`
+	Status              string          `json:"status"`
+	Position            int             `json:"position"`
+	Views               int             `json:"views"`
+	AccountID           int             `json:"account_id"`
+	PortalID            int             `json:"portal_id"`
+	CategoryID          *int            `json:"category_id"`
+	FolderID            *int            `json:"folder_id"`
+	AuthorID            *int            `json:"author_id"`
+	AssociatedArticleID *int            `json:"associated_article_id"`
+	Meta                json.RawMessage `json:"meta"`
 }
 
 // ---------------------------------------------------------------------------
@@ -692,12 +754,16 @@ type Notification struct {
 
 // Account represents a Chatwoot account.
 type Account struct {
-	ID              int    `json:"id"`
-	Name            string `json:"name"`
-	Locale          string `json:"locale"`
-	Domain          string `json:"domain"`
-	SupportEmail    string `json:"support_email"`
-	AutoResolveDays int    `json:"auto_resolve_duration"`
+	ID               int            `json:"id"`
+	Name             string         `json:"name"`
+	Locale           string         `json:"locale"`
+	Domain           string         `json:"domain"`
+	SupportEmail     string         `json:"support_email"`
+	AutoResolveDays  int            `json:"auto_resolve_duration"`
+	Status           string         `json:"status"`
+	CreatedAt        string         `json:"created_at"`
+	Features         json.RawMessage `json:"features"`
+	CustomAttributes map[string]any `json:"custom_attributes"`
 }
 
 // UpdateAccountRequest is the payload for updating an account.
@@ -718,12 +784,18 @@ type AuditLog struct {
 	ID             int             `json:"id"`
 	AuditableID    int             `json:"auditable_id"`
 	AuditableType  string          `json:"auditable_type"`
+	Auditable      json.RawMessage `json:"auditable"`
 	Action         string          `json:"action"`
 	AuditedChanges json.RawMessage `json:"audited_changes"`
 	AssociatedID   *int            `json:"associated_id"`
 	AssociatedType *string         `json:"associated_type"`
 	UserID         *int            `json:"user_id"`
+	UserType       string          `json:"user_type"`
 	Username       *string         `json:"username"`
+	Version        int             `json:"version"`
+	Comment        *string         `json:"comment"`
+	RequestUUID    string          `json:"request_uuid"`
+	RemoteAddress  *string         `json:"remote_address"`
 	CreatedAt      FlexTime        `json:"created_at"`
 }
 
@@ -748,6 +820,9 @@ type AgentBot struct {
 	BotType     string          `json:"bot_type"`
 	BotConfig   json.RawMessage `json:"bot_config"`
 	AccountID   int             `json:"account_id"`
+	Thumbnail   string          `json:"thumbnail"`
+	AccessToken string          `json:"access_token"`
+	SystemBot   bool            `json:"system_bot"`
 	CreatedAt   FlexTime        `json:"created_at"`
 	UpdatedAt   FlexTime        `json:"updated_at"`
 }
