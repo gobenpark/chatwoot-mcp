@@ -152,6 +152,12 @@ func RegisterConversationTools(server *mcp.Server, client *chatwoot.Client) {
 		if conv.LastActivityAt.Valid {
 			sb.WriteString(fmt.Sprintf("Last activity: %s\n", conv.LastActivityAt.Format(time.RFC3339)))
 		}
+		if len(conv.CustomAttributes) > 0 {
+			sb.WriteString("Custom attributes:\n")
+			for k, v := range conv.CustomAttributes {
+				sb.WriteString(fmt.Sprintf("  %s: %v\n", k, v))
+			}
+		}
 		return textResult(sb.String()), nil, nil
 	})
 
