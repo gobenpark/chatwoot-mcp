@@ -411,7 +411,7 @@ type CustomAttributeDefinition struct {
 	AttributeDisplayType string `json:"attribute_display_type"`
 	AttributeDescription string `json:"attribute_description"`
 	AttributeKey         string `json:"attribute_key"`
-	AttributeModel       int    `json:"attribute_model"`
+	AttributeModel       any    `json:"attribute_model"`
 }
 
 // CreateCustomAttributeRequest is the payload for creating a custom attribute definition.
