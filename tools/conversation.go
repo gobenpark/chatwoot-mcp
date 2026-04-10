@@ -14,8 +14,13 @@ import (
 // --- Input types ---
 
 type ListConversationsInput struct {
-	Status string `json:"status,omitempty"`
-	Page   int    `json:"page,omitempty"`
+	Status       string   `json:"status,omitempty"`
+	AssigneeType string   `json:"assignee_type,omitempty"`
+	Q            string   `json:"q,omitempty"`
+	InboxID      int      `json:"inbox_id,omitempty"`
+	TeamID       int      `json:"team_id,omitempty"`
+	Labels       []string `json:"labels,omitempty"`
+	Page         int      `json:"page,omitempty"`
 }
 
 type GetConversationInput struct {
@@ -93,9 +98,9 @@ func RegisterConversationTools(server *mcp.Server, client *chatwoot.Client) {
 	// --- list_conversations ---
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "list_conversations",
-		Description: "List conversations in Chatwoot. Filter by status: open, resolved, pending, snoozed, all.",
+		Description: "List conversations in Chatwoot. Filters: status (open/resolved/pending/snoozed/all), assignee_type (me/assigned/unassigned/all), q (search messages), inbox_id, team_id, labels (array of label names).",
 	}, func(ctx context.Context, req *mcp.CallToolRequest, input ListConversationsInput) (*mcp.CallToolResult, any, error) {
-		resp, err := client.ListConversations(ctx, input.Status, input.Page)
+		resp, err := client.ListConversations(ctx, input.Status, input.AssigneeType, input.Q, input.InboxID, input.TeamID, input.Labels, input.Page)
 		if err != nil {
 			return errorResult(err), nil, nil
 		}

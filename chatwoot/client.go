@@ -105,10 +105,25 @@ func (c *Client) do(ctx context.Context, method, path string, body interface{}, 
 // ---------------------------------------------------------------------------
 
 // ListConversations returns conversations with optional status filter and pagination.
-func (c *Client) ListConversations(ctx context.Context, status string, page int) (*ConversationListResponse, error) {
+func (c *Client) ListConversations(ctx context.Context, status, assigneeType, q string, inboxID, teamID int, labels []string, page int) (*ConversationListResponse, error) {
 	params := url.Values{}
 	if status != "" {
 		params.Set("status", status)
+	}
+	if assigneeType != "" {
+		params.Set("assignee_type", assigneeType)
+	}
+	if q != "" {
+		params.Set("q", q)
+	}
+	if inboxID > 0 {
+		params.Set("inbox_id", strconv.Itoa(inboxID))
+	}
+	if teamID > 0 {
+		params.Set("team_id", strconv.Itoa(teamID))
+	}
+	for _, l := range labels {
+		params.Add("labels[]", l)
 	}
 	if page > 0 {
 		params.Set("page", strconv.Itoa(page))
