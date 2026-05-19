@@ -72,8 +72,9 @@ type DeleteMessageInput struct {
 }
 
 type ToggleStatusInput struct {
-	ConversationID int    `json:"conversation_id"`
-	Status         string `json:"status"`
+	ConversationID int     `json:"conversation_id"`
+	Status         string  `json:"status"`
+	SnoozedUntil   *string `json:"snoozed_until,omitempty"`
 }
 
 type TogglePriorityInput struct {
@@ -350,12 +351,24 @@ func RegisterConversationTools(server *mcp.Server, client *chatwoot.Client) {
 	// --- toggle_conversation_status ---
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "toggle_conversation_status",
-		Description: "Change the status of a conversation. Valid statuses: open, resolved, pending, snoozed.",
+		Description: "Change the status of a conversation. Valid statuses: open, resolved, pending, snoozed. For status='snoozed', optionally pass snoozed_until as an RFC3339 timestamp (e.g. '2026-05-23T09:00:00Z') or Unix epoch seconds ('1748000000') to set an auto-reopen time. Without snoozed_until, the conversation is snoozed indefinitely and will not auto-reopen.",
 	}, func(ctx context.Context, req *mcp.CallToolRequest, input ToggleStatusInput) (*mcp.CallToolResult, any, error) {
-		if err := client.ToggleStatus(ctx, input.ConversationID, input.Status); err != nil {
+		var snoozedUntil *int64
+		if input.SnoozedUntil != nil && *input.SnoozedUntil != "" {
+			ts, err := parseSnoozedUntil(*input.SnoozedUntil)
+			if err != nil {
+				return errorResult(fmt.Errorf("invalid snoozed_until: %w", err)), nil, nil
+			}
+			snoozedUntil = &ts
+		}
+		if err := client.ToggleStatus(ctx, input.ConversationID, input.Status, snoozedUntil); err != nil {
 			return errorResult(err), nil, nil
 		}
-		return textResult(fmt.Sprintf("Conversation #%d status changed to '%s'!", input.ConversationID, input.Status)), nil, nil
+		msg := fmt.Sprintf("Conversation #%d status changed to '%s'!", input.ConversationID, input.Status)
+		if snoozedUntil != nil {
+			msg += fmt.Sprintf(" (snoozed_until: %s, Unix %d)", time.Unix(*snoozedUntil, 0).UTC().Format(time.RFC3339), *snoozedUntil)
+		}
+		return textResult(msg), nil, nil
 	})
 
 	// --- toggle_conversation_priority ---

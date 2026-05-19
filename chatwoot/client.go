@@ -199,10 +199,12 @@ func (c *Client) TogglePriority(ctx context.Context, conversationID int, priorit
 	return c.do(ctx, http.MethodPost, path, payload, nil)
 }
 
-// ToggleStatus toggles the status of a conversation (open, resolved, pending).
-func (c *Client) ToggleStatus(ctx context.Context, conversationID int, status string) error {
+// ToggleStatus toggles the status of a conversation (open, resolved, pending, snoozed).
+// When status is "snoozed", snoozedUntil sets an auto-reopen Unix timestamp (seconds).
+// Pass nil to snooze without a date (the conversation will not auto-reopen).
+func (c *Client) ToggleStatus(ctx context.Context, conversationID int, status string, snoozedUntil *int64) error {
 	path := c.accountPath(fmt.Sprintf("/conversations/%d/toggle_status", conversationID))
-	payload := ToggleStatusRequest{Status: status}
+	payload := ToggleStatusRequest{Status: status, SnoozedUntil: snoozedUntil}
 	return c.do(ctx, http.MethodPost, path, payload, nil)
 }
 

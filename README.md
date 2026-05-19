@@ -13,7 +13,7 @@ A Model Context Protocol (MCP) server for [Chatwoot](https://www.chatwoot.com), 
 | | `get_messages` | Get all messages in a conversation |
 | | `send_message` | Send outgoing, incoming, or private note |
 | | `delete_message` | Delete a message |
-| | `toggle_conversation_status` | Change status (open, resolved, pending, snoozed) |
+| | `toggle_conversation_status` | Change status (open, resolved, pending, snoozed). For `snoozed`, pass optional `snoozed_until` (RFC3339 or Unix seconds) for an auto-reopen time. |
 | | `toggle_conversation_priority` | Set priority (urgent, high, medium, low) |
 | | `assign_conversation` | Assign to agent and/or team |
 | | `update_conversation_labels` | Update conversation labels |
